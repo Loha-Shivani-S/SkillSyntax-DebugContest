@@ -857,14 +857,37 @@ export const adminOverview = createServerFn({ method: "POST" })
             ok: true as const,
             clock,
             storageBackend: "supabase" as const,
+            backendReason: "Connected to Cloud Supabase",
             participants: participants.data ?? [],
             progress: progress.data ?? [],
             submissions: submissions.data ?? [],
             questions: QUESTIONS,
           };
+        } else if (participants.error) {
+          console.error("[getAdminSnapshot] Supabase query error:", participants.error);
+          return {
+            ok: true as const,
+            clock,
+            storageBackend: "local" as const,
+            backendReason: `Supabase query error: ${participants.error.message}`,
+            participants: localDb.listParticipants(),
+            progress: localDb.getAllProgress(),
+            submissions: localDb.listSubmissions(),
+            questions: QUESTIONS,
+          };
         }
-      } catch {
-        // Fall back to localDb
+      } catch (err: any) {
+        console.error("[getAdminSnapshot] Supabase connection exception:", err);
+        return {
+          ok: true as const,
+          clock,
+          storageBackend: "local" as const,
+          backendReason: `Supabase exception: ${err?.message || String(err)}`,
+          participants: localDb.listParticipants(),
+          progress: localDb.getAllProgress(),
+          submissions: localDb.listSubmissions(),
+          questions: QUESTIONS,
+        };
       }
     }
 
@@ -872,6 +895,7 @@ export const adminOverview = createServerFn({ method: "POST" })
       ok: true as const,
       clock,
       storageBackend: "local" as const,
+      backendReason: "No SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY detected in environment",
       participants: localDb.listParticipants(),
       progress: localDb.getAllProgress(),
       submissions: localDb.listSubmissions(),

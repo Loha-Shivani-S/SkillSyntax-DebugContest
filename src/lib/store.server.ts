@@ -119,9 +119,21 @@ function saveLocalDb(): void {
   }
 }
 
+function cleanEnv(val?: string): string {
+  if (!val) return "";
+  return val.trim().replace(/^["']|["']$/g, "").trim();
+}
+
 export function isSupabaseConfigured(): boolean {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+  const url = cleanEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+  const key = cleanEnv(
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY
+  );
   return Boolean(url && key);
 }
 

@@ -216,10 +216,17 @@ function AdminPage() {
                 CLOUD SUPABASE CONNECTED (LIVE)
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded bg-status-warn/15 border border-status-warn/40 px-2 py-0.5 text-[10px] font-bold text-status-warn">
-                <span className="size-1.5 rounded-full bg-status-warn" />
-                LOCAL FALLBACK (IN-MEMORY)
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded bg-status-warn/15 border border-status-warn/40 px-2 py-0.5 text-[10px] font-bold text-status-warn">
+                  <span className="size-1.5 rounded-full bg-status-warn" />
+                  LOCAL FALLBACK (IN-MEMORY)
+                </span>
+                {(payload as any)?.backendReason && (
+                  <span className="text-[10px] text-muted-foreground/80">
+                    ({(payload as any).backendReason})
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <span className="text-[10px] text-muted-foreground tracking-wider">
