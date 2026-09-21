@@ -313,6 +313,48 @@ const tabViolationSchema = z.object({
 export const recordTabViolation = createServerFn({ method: "POST" })
   .validator((input: unknown) => tabViolationSchema.parse(input))
   .handler(async ({ data }) => {
+    let violationCount = 0;
+    let awayDurationSeconds = 0;
+    let disqualified = false;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const existing = await supabaseAdmin
+          .from("participants")
+          .select("tab_switch_count, away_duration_seconds, disqualified")
+          .eq("id", data.participantId)
+          .maybeSingle();
+
+        if (existing.data) {
+          violationCount = (((existing.data as any).tab_switch_count as number) || 0) + 1;
+          awayDurationSeconds =
+            (((existing.data as any).away_duration_seconds as number) || 0) +
+            Math.max(1, data.awaySeconds);
+          disqualified = violationCount >= 3 || Boolean(existing.data.disqualified);
+
+          await (supabaseAdmin as any)
+            .from("participants")
+            .update({
+              tab_switch_count: violationCount,
+              away_duration_seconds: awayDurationSeconds,
+              last_violation_at: new Date().toISOString(),
+              disqualified,
+            })
+            .eq("id", data.participantId);
+
+          return {
+            ok: true as const,
+            violationCount,
+            awayDurationSeconds,
+            disqualified,
+          };
+        }
+      } catch (e) {
+        console.error("[Supabase] Failed to record tab violation:", e);
+      }
+    }
+
     const res = localDb.recordTabViolation(data.participantId, data.awaySeconds);
     return {
       ok: true as const,
@@ -797,7 +839,7 @@ export const adminOverview = createServerFn({ method: "POST" })
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const participants = await supabaseAdmin
           .from("participants")
-          .select("id, participant_code, full_name, college, department, year, register_number, email, disqualified, created_at")
+          .select("id, participant_code, full_name, college, department, year, register_number, email, disqualified, tab_switch_count, away_duration_seconds, last_violation_at, created_at")
           .order("created_at", { ascending: true });
 
         const progress = await supabaseAdmin
@@ -862,6 +904,16 @@ export const adminParticipantAction = createServerFn({ method: "POST" })
           await supabaseAdmin.from("participants").delete().eq("id", data.participantId);
         } else if (data.action === "reset") {
           await supabaseAdmin.from("participant_progress").delete().eq("participant_id", data.participantId);
+        } else if (data.action === "clear_violations") {
+          await (supabaseAdmin as any)
+            .from("participants")
+            .update({
+              tab_switch_count: 0,
+              away_duration_seconds: 0,
+              last_violation_at: null,
+              disqualified: false,
+            })
+            .eq("id", data.participantId);
         } else {
           await supabaseAdmin
             .from("participants")
