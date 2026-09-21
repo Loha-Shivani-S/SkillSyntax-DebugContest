@@ -38,7 +38,10 @@ function Dashboard() {
   const snapshot = useQuery({
     queryKey: ["snapshot", participant?.id],
     enabled: Boolean(participant?.id),
-    refetchInterval: 15000,
+    refetchInterval: (query) => {
+      const state = query.state.data?.ok ? query.state.data.clock.state : "draft";
+      return state === "live" ? 15000 : 3000;
+    },
     queryFn: () => fetchSnapshot({ data: { participantId: participant!.id } }),
   });
 
@@ -60,6 +63,7 @@ function Dashboard() {
 
   const phase = data?.clock.state ?? "draft";
   const isLive = phase === "live" && remaining > 0;
+  const isAccessible = isLive || phase === "ended" || phase === "published";
   const solved = data?.solved ?? 0;
 
   useEffect(() => {
@@ -149,18 +153,50 @@ function Dashboard() {
         </div>
 
         {!isLive && (
-          <div className="panel-frame mt-4 rounded-sm border-status-warn/50 px-4 py-3 text-xs text-status-warn">
+          <div className="panel-frame mt-4 rounded-sm border-status-warn/50 bg-status-warn/5 px-4 py-3 text-xs text-status-warn">
             {phase === "ready" || phase === "draft"
-              ? "The recovery window has not opened. The control room will bring the contest live — keep this console open."
+              ? "🔒 CONTEST ON STANDBY: The recovery window has not opened. Subsystem questions and firmware code are encrypted and will automatically unlock the moment the control room sets the contest to LIVE."
               : "The recovery window is closed. Code execution is locked; your scores are final."}
           </div>
         )}
 
-        <Panel className="mt-4" title="Fault Grid — Q1 … Q12">
+        <Panel className="mt-4" title={`Fault Grid — Q1 … Q12 ${!isAccessible ? "(ENCRYPTED · STANDBY)" : ""}`}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {QUESTIONS.map((q) => {
               const status = statusFor(q.id);
               const best = data?.progress.find((p) => p.questionId === q.id)?.bestScore ?? 0;
+
+              if (!isAccessible) {
+                return (
+                  <div
+                    key={q.id}
+                    className="panel-frame relative rounded-sm p-4 border-dashed border-border/80 bg-background/40 cursor-not-allowed select-none transition opacity-80"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-muted-foreground">{q.codename}</span>
+                      <span className="inline-flex items-center gap-1.5 rounded bg-status-warn/15 px-2 py-0.5 text-[10px] font-mono tracking-widest text-status-warn">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-status-warn animate-pulse" />
+                        LOCKED
+                      </span>
+                    </div>
+                    <p className="mt-2 font-mono text-sm tracking-widest text-muted-foreground/50">
+                      ••••••••••••••••••••
+                    </p>
+                    <p className="mt-1 truncate text-[10px] tracking-wider text-muted-foreground/60">
+                      RESTRICTED · UNLOCKS WHEN LIVE
+                    </p>
+                    <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-2">
+                      <span className="text-[10px] tracking-widest text-muted-foreground/70">
+                        {q.points} PTS
+                      </span>
+                      <span className="text-[10px] tracking-widest text-status-idle font-mono">
+                        STANDBY
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={q.id}

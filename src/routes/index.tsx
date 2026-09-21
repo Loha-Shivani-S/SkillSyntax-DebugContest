@@ -37,6 +37,10 @@ function Landing() {
   });
 
   const phase = PHASE_COPY[clock.data?.state ?? "draft"] ?? PHASE_COPY["draft"]!;
+  const isAccessible =
+    clock.data?.state === "live" ||
+    clock.data?.state === "ended" ||
+    clock.data?.state === "published";
 
   return (
     <div className="min-h-screen">
@@ -110,15 +114,34 @@ function Landing() {
 
           <Panel title="Fault Manifest">
             <ol className="space-y-1.5 text-xs text-muted-foreground">
-              {QUESTIONS.slice(0, 6).map((q) => (
-                <li key={q.id} className="flex items-center justify-between gap-2">
-                  <span>
-                    <span className="text-primary">{q.codename}</span> {q.title}
-                  </span>
-                  <span className="text-[10px] text-status-idle">{q.points} PTS</span>
-                </li>
-              ))}
-              <li className="text-status-idle">… 6 further subsystems classified until launch</li>
+              {isAccessible ? (
+                <>
+                  {QUESTIONS.slice(0, 6).map((q) => (
+                    <li key={q.id} className="flex items-center justify-between gap-2">
+                      <span>
+                        <span className="text-primary">{q.codename}</span> {q.title}
+                      </span>
+                      <span className="text-[10px] text-status-idle">{q.points} PTS</span>
+                    </li>
+                  ))}
+                  <li className="text-status-idle">… 6 further subsystems classified until launch</li>
+                </>
+              ) : (
+                <>
+                  {QUESTIONS.slice(0, 6).map((q) => (
+                    <li key={q.id} className="flex items-center justify-between gap-2">
+                      <span>
+                        <span className="text-muted-foreground">{q.codename}</span>{" "}
+                        <span className="font-mono text-muted-foreground/50 tracking-wider">••••••••••••••••••••</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{q.points} PTS</span>
+                    </li>
+                  ))}
+                  <li className="font-mono text-[10px] text-status-warn">
+                    🔒 SUBSYSTEM DETAILS ENCRYPTED UNTIL CONTEST GOES LIVE
+                  </li>
+                </>
+              )}
             </ol>
           </Panel>
 

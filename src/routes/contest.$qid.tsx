@@ -30,8 +30,8 @@ export const Route = createFileRoute("/contest/$qid")({
         meta: [{ title: "Unknown subsystem" }, { name: "robots", content: "noindex" }],
       };
     }
-    const title = `${question.codename} ${question.title} — SYSTEM FAILURE`;
-    const description = `${question.subsystem}: debug the broken C firmware for ${question.points} points.`;
+    const title = `${question.codename} Subsystem — SYSTEM FAILURE`;
+    const description = `SYSTEM FAILURE hardware × software debugging contest subsystem.`;
     return {
       meta: [
         { title },
@@ -69,7 +69,10 @@ function Workspace() {
   const snapshot = useQuery({
     queryKey: ["snapshot", participant?.id],
     enabled: Boolean(participant?.id),
-    refetchInterval: 20000,
+    refetchInterval: (query) => {
+      const state = query.state.data?.ok ? query.state.data.clock.state : "draft";
+      return state === "live" ? 20000 : 3000;
+    },
     queryFn: () => fetchSnapshot({ data: { participantId: participant!.id } }),
   });
 
@@ -96,7 +99,9 @@ function Workspace() {
     return () => clearInterval(id);
   }, []);
 
-  const isLive = (data?.clock.state ?? "draft") === "live" && remaining > 0;
+  const phase = data?.clock.state ?? "draft";
+  const isLive = phase === "live" && remaining > 0;
+  const isAccessible = isLive || phase === "ended" || phase === "published";
 
   const execute = useMutation({
     mutationFn: async (kind: "run" | "submit") => {
@@ -129,6 +134,66 @@ function Workspace() {
 
   const prev = QUESTIONS.find((q) => q.id === questionId - 1);
   const next = QUESTIONS.find((q) => q.id === questionId + 1);
+
+  if (!isAccessible) {
+    return (
+      <div className="min-h-screen">
+        <ProctoringShield
+          participantId={participant?.id}
+          participantName={data?.participant.name}
+          rollNo={participant?.code}
+          isLive={false}
+          initialDisqualified={data?.participant.disqualified}
+        />
+        <TerminalHeader
+          right={
+            <span className="flex items-center gap-2 font-mono text-xs tabular-nums text-foreground">
+              <Led tone="warn" />
+              {phase === "ready" ? "STANDBY" : phase.toUpperCase()}
+            </span>
+          }
+        />
+        <main className="mx-auto max-w-2xl px-4 py-16 sm:py-24">
+          <Panel title="Subsystem Locked · Access Restricted">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-status-warn/40 bg-status-warn/10 text-3xl shadow-lg shadow-status-warn/10">
+                🔒
+              </div>
+              <p className="font-mono text-[10px] tracking-widest text-status-warn">
+                SUBSYSTEM {question.codename} · FIRMWARE ENCRYPTED
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-wide text-foreground">
+                ACCESS LOCKED BY CONTROL ROOM
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-muted-foreground">
+                The recovery window has not opened. Problem statements, broken firmware source files, and test benches remain strictly locked until the competition is activated <span className="font-bold text-primary">LIVE</span>.
+              </p>
+
+              <div className="my-6 inline-flex items-center gap-2.5 rounded border border-status-warn/40 bg-status-warn/5 px-4 py-2 font-mono text-xs text-status-warn">
+                <span className="inline-block h-2 w-2 rounded-full bg-status-warn animate-ping" />
+                CONTEST PHASE: {phase.toUpperCase()} · AWAITING ADMIN ACTIVATION
+              </div>
+
+              <div className="flex justify-center">
+                <Link
+                  to="/contest"
+                  className="rounded border border-border bg-background px-5 py-2.5 text-xs font-semibold tracking-widest text-foreground hover:border-primary hover:text-primary transition shadow-sm"
+                >
+                  ← RETURN TO RECOVERY CONSOLE
+                </Link>
+              </div>
+
+              <div className="mt-8 border-t border-border/30 pt-4">
+                <p className="font-mono text-[10px] tracking-widest text-muted-foreground/60">
+                  LIVE SYNC ACTIVE (3s) · THIS SUBSYSTEM WILL AUTOMATICALLY UNLOCK ONCE LIVE
+                </p>
+              </div>
+            </div>
+          </Panel>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
