@@ -206,6 +206,27 @@ function AdminPage() {
       />
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6">
+        {/* System & Database Health Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/80 bg-panel/40 px-4 py-2 text-xs font-mono">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-[10px] tracking-widest text-muted-foreground uppercase">DATABASE ENGINE:</span>
+            {(payload as any)?.storageBackend === "supabase" ? (
+              <span className="inline-flex items-center gap-1.5 rounded bg-status-ok/15 border border-status-ok/40 px-2 py-0.5 text-[10px] font-bold text-status-ok">
+                <span className="size-1.5 rounded-full bg-status-ok animate-pulse" />
+                CLOUD SUPABASE CONNECTED (LIVE)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded bg-status-warn/15 border border-status-warn/40 px-2 py-0.5 text-[10px] font-bold text-status-warn">
+                <span className="size-1.5 rounded-full bg-status-warn" />
+                LOCAL FALLBACK (IN-MEMORY)
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground tracking-wider">
+            ADMIN STATUS: VERIFIED · DRILL 2026
+          </span>
+        </div>
+
         {/* Top Stat Panels */}
         <div className="grid gap-4 md:grid-cols-3">
           <Panel

@@ -856,6 +856,7 @@ export const adminOverview = createServerFn({ method: "POST" })
           return {
             ok: true as const,
             clock,
+            storageBackend: "supabase" as const,
             participants: participants.data ?? [],
             progress: progress.data ?? [],
             submissions: submissions.data ?? [],
@@ -870,6 +871,7 @@ export const adminOverview = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       clock,
+      storageBackend: "local" as const,
       participants: localDb.listParticipants(),
       progress: localDb.getAllProgress(),
       submissions: localDb.listSubmissions(),
