@@ -82,7 +82,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "A 90-minute C debugging contest for Electronics & Instrumentation students: 12 broken subsystems, 100 points.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "SYSTEM FAILURE" },
+      { property: "og:title", content: "SYSTEM FAILURE — Hardware × Software Debugging Challenge" },
+      {
+        property: "og:description",
+        content:
+          "A 90-minute C debugging contest for Electronics & Instrumentation students: 12 broken subsystems, 100 points.",
+      },
+      { property: "og:image", content: "/og-image.jpg" },
+      { property: "og:image:alt", content: "SYSTEM FAILURE Debugging Challenge Banner" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SYSTEM FAILURE — Hardware × Software Debugging Challenge" },
+      {
+        name: "twitter:description",
+        content:
+          "A 90-minute C debugging contest for Electronics & Instrumentation students: 12 broken subsystems, 100 points.",
+      },
+      { name: "twitter:image", content: "/og-image.jpg" },
     ],
     links: [
       {
@@ -96,7 +112,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap",
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
