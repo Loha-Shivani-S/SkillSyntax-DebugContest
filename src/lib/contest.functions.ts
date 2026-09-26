@@ -891,11 +891,26 @@ export const adminOverview = createServerFn({ method: "POST" })
       }
     }
 
+    const hasUrl = Boolean(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const hasKey = Boolean(
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.SUPABASE_ANON_KEY
+    );
+    const missingDesc = !hasUrl && !hasKey
+      ? "Neither SUPABASE_URL nor SUPABASE_SERVICE_ROLE_KEY found in process.env"
+      : !hasUrl
+      ? "SUPABASE_URL missing in process.env"
+      : "SUPABASE_SERVICE_ROLE_KEY missing in process.env";
+
     return {
       ok: true as const,
       clock,
       storageBackend: "local" as const,
-      backendReason: "No SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY detected in environment",
+      backendReason: missingDesc,
       participants: localDb.listParticipants(),
       progress: localDb.getAllProgress(),
       submissions: localDb.listSubmissions(),

@@ -124,7 +124,33 @@ function cleanEnv(val?: string): string {
   return val.trim().replace(/^["']|["']$/g, "").trim();
 }
 
+export function loadEnvFile() {
+  if (typeof process === "undefined" || !process.cwd) return;
+  try {
+    const envPath = path.resolve(process.cwd(), ".env");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx > 0) {
+          const k = trimmed.slice(0, eqIdx).trim();
+          let v = trimmed.slice(eqIdx + 1).trim();
+          v = v.replace(/^["']|["']$/g, "").trim();
+          if (!process.env[k]) {
+            process.env[k] = v;
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
+loadEnvFile();
+
 export function isSupabaseConfigured(): boolean {
+  loadEnvFile();
   const url = cleanEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
   const key = cleanEnv(
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
